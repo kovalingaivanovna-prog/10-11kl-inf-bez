@@ -1,0 +1,1111 @@
+< html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Своя игра — Информационная безопасность, 10–11 класс</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f4e 50%, #0d1235 100%);
+    color: #e0e6ff;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(100, 150, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(150, 100, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(200, 150, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== СТАРТОВЫЙ ЭКРАН ===== */
+#startScreen { text-align: center; padding: 15px; overflow-y: auto; }
+
+.game-title {
+    font-size: 3em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffa500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    margin-bottom: 10px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+}
+
+.game-subtitle {
+    font-size: 1.2em;
+    color: #c0d0ff;
+    margin-bottom: 15px;
+}
+
+.game-info {
+    background: rgba(20, 30, 80, 0.8);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 15px;
+    padding: 15px 25px;
+    margin: 10px 0;
+    max-width: 650px;
+    box-shadow: 0 0 40px rgba(100, 150, 255, 0.2);
+    text-align: left;
+}
+
+.game-info p {
+    font-size: 0.95em;
+    margin: 4px 0;
+    color: #c0d0ff;
+}
+
+.setting-row {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.setting-row label {
+    font-size: 1em;
+    color: #c0d0ff;
+}
+
+.setting-row select, .setting-row input {
+    font-size: 1em;
+    padding: 7px 14px;
+    background: rgba(30, 40, 100, 0.9);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 8px;
+    color: #e0e6ff;
+    cursor: pointer;
+}
+
+.team-name-input {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.team-name-input input {
+    padding: 7px 12px;
+    font-size: 0.95em;
+    background: rgba(30, 40, 100, 0.9);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 8px;
+    color: #e0e6ff;
+    width: 250px;
+}
+
+.start-button {
+    font-size: 1.3em;
+    padding: 12px 40px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    border: none;
+    border-radius: 50px;
+    color: #0a0e27;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+    transition: all 0.3s;
+    margin-top: 12px;
+}
+
+.start-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.8);
+}
+
+/* ===== ИГРОВОЙ ЭКРАН ===== */
+#gameScreen {
+    padding: 8px 12px;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.game-header {
+    width: 100%;
+    text-align: center;
+    flex: 0 0 auto;
+    padding: 3px 0;
+}
+
+.game-header h2 {
+    font-size: 1.3em;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.game-board-wrapper {
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.category-header {
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.6);
+    border-radius: 8px;
+    padding: 5px 4px;
+    font-size: 0.78em;
+    font-weight: bold;
+    color: #ffed4e;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    min-height: 55px;
+    line-height: 1.2;
+}
+
+.question-cell {
+    background: linear-gradient(135deg, rgba(30, 40, 100, 0.9) 0%, rgba(40, 50, 120, 0.9) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.4);
+    border-radius: 8px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffd700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    min-height: 50px;
+}
+
+.question-cell:hover:not(.used) {
+    border-color: #ffd700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    transform: scale(1.03);
+}
+
+.question-cell.used {
+    background: rgba(20, 25, 60, 0.4);
+    border-color: rgba(100, 150, 255, 0.15);
+    color: rgba(100, 120, 180, 0.3);
+    cursor: default;
+    text-shadow: none;
+}
+
+/* Панель команд */
+.teams-panel {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 10px;
+    background: rgba(10, 15, 40, 0.7);
+    border-top: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 12px 12px 0 0;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+}
+
+.team-card {
+    flex: 1;
+    min-width: 140px;
+    max-width: 250px;
+    background: linear-gradient(135deg, rgba(30, 40, 100, 0.7) 0%, rgba(40, 50, 120, 0.7) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.team-card.active-turn {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 165, 0, 0.15) 100%);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+.team-name {
+    font-size: 0.95em;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.team-score {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #ffed4e;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.bottom-controls {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 3px 0;
+    flex: 0 0 auto;
+}
+
+.control-button {
+    font-size: 0.85em;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 20px;
+    color: #e0e6ff;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.control-button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(100, 150, 255, 0.5);
+}
+
+.control-button.danger {
+    background: linear-gradient(135deg, rgba(255, 80, 80, 0.3) 0%, rgba(255, 120, 120, 0.3) 100%);
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ВОПРОСА ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(20, 30, 80, 0.97) 0%, rgba(30, 40, 100, 0.97) 100%);
+    border: 3px solid rgba(100, 150, 255, 0.6);
+    border-radius: 20px;
+    padding: 20px 30px;
+    max-width: 850px;
+    width: 95%;
+    max-height: 92vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(100, 150, 255, 0.5);
+}
+
+.question-category {
+    font-size: 0.9em;
+    color: #c0d0ff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.question-value {
+    font-size: 1.8em;
+    color: #ffd700;
+    font-weight: bold;
+    margin-bottom: 12px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.question-text {
+    font-size: 1.25em;
+    line-height: 1.4;
+    color: #ffffff;
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    background: rgba(10, 15, 40, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(100, 150, 255, 0.3);
+}
+
+.fun-fact {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+    border-left: 4px solid #ffd700;
+    padding: 10px 15px;
+    margin: 12px 0;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 0.95em;
+    color: #ffed4e;
+    line-height: 1.4;
+}
+
+.fun-fact::before {
+    content: "💡 Интересный факт: ";
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.answer-block {
+    background: rgba(0, 200, 100, 0.1);
+    border: 2px solid rgba(0, 255, 150, 0.4);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 12px 0;
+    display: none;
+}
+
+.answer-block.visible { display: block; }
+
+.answer-label {
+    font-size: 0.85em;
+    color: #00ff88;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.answer-text {
+    font-size: 1.15em;
+    color: #ffffff;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.modal-button {
+    font-size: 0.95em;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.modal-button:hover { transform: scale(1.03); }
+
+.modal-button.primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    color: #0a0e27;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.modal-button.secondary {
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    color: #e0e6ff;
+    border: 2px solid rgba(100, 150, 255, 0.5);
+}
+
+.scoring-section {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(100, 150, 255, 0.3);
+}
+
+.scoring-section.visible { display: block; }
+
+.scoring-title {
+    font-size: 1em;
+    color: #ffd700;
+    margin-bottom: 8px;
+}
+
+.scoring-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.team-score-btn {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, rgba(0, 200, 100, 0.3) 0%, rgba(0, 255, 150, 0.3) 100%);
+    border: 2px solid rgba(0, 255, 150, 0.5);
+    border-radius: 20px;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 0.85em;
+}
+
+.team-score-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+}
+
+.team-score-btn.no-answer {
+    background: linear-gradient(135deg, rgba(150, 150, 150, 0.3) 0%, rgba(100, 100, 100, 0.3) 100%);
+    border-color: rgba(150, 150, 150, 0.5);
+}
+
+/* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
+#finalScreen { text-align: center; padding: 25px; overflow-y: auto; }
+
+.final-title {
+    font-size: 2.3em;
+    color: #ffd700;
+    margin-bottom: 15px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.final-results {
+    background: rgba(20, 30, 80, 0.8);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    max-width: 700px;
+    width: 100%;
+}
+
+.team-result {
+    font-size: 1.15em;
+    margin: 8px 0;
+    padding: 10px;
+    background: rgba(30, 40, 100, 0.5);
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.winner {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.3) 100%);
+    border: 2px solid #ffd700;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.medal { font-size: 1.2em; margin-right: 8px; }
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 900px) {
+    .game-title { font-size: 2em; }
+    .game-board { gap: 4px; }
+    .category-header { font-size: 0.65em; padding: 4px 2px; min-height: 50px; }
+    .question-cell { font-size: 1.1em; min-height: 45px; }
+    .question-text { font-size: 1em; }
+    .team-card { padding: 6px 8px; min-width: 120px; }
+    .team-name { font-size: 0.85em; }
+    .team-score { font-size: 1.1em; }
+    .modal-content { padding: 15px 20px; }
+}
+
+@media (max-height: 650px) {
+    .game-header h2 { font-size: 1.1em; }
+    .category-header { font-size: 0.7em; min-height: 45px; }
+    .question-cell { font-size: 1.2em; min-height: 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== СТАРТОВЫЙ ЭКРАН ===== -->
+<div id="startScreen" class="screen active">
+    <h1 class="game-title">СВОЯ ИГРА</h1>
+    <div class="game-subtitle">Информационная безопасность · 10–11 класс</div>
+    <div class="game-info">
+        <p><strong>📚 Предмет:</strong> Информационная безопасность (правовые основы + цифровая безопасность)</p>
+        <p><strong>🎯 Темы:</strong> Цифровая гигиена, персональные данные, киберугрозы, авторское право, законодательство ПМР, цифровая этика</p>
+        <p><strong>⏱️ Время:</strong> 35 минут</p>
+        <p><strong>🎲 Формат:</strong> 6 категорий × 5 вопросов (100–500 баллов)</p>
+        <p><strong>💡 Стиль:</strong> с интересными фактами</p>
+    </div>
+
+    <div class="setting-row">
+        <label for="teamCount">Количество команд:</label>
+        <select id="teamCount" onchange="updateTeamInputs()">
+            <option value="2">2 команды</option>
+            <option value="3" selected>3 команды</option>
+            <option value="4">4 команды</option>
+        </select>
+    </div>
+
+    <div class="team-name-input" id="teamNameInputs"></div>
+
+    <button class="start-button" onclick="startGame()">НАЧАТЬ ИГРУ</button>
+</div>
+
+<!-- ===== ИГРОВОЙ ЭКРАН ===== -->
+<div id="gameScreen" class="screen">
+    <div class="game-header">
+        <h2>🎯 СВОЯ ИГРА · Информационная безопасность · 10–11 класс</h2>
+    </div>
+
+    <div class="game-board-wrapper">
+        <div class="game-board" id="gameBoard"></div>
+    </div>
+
+    <div class="bottom-controls">
+        <button class="control-button" onclick="showScoreboard()">📊 Табло</button>
+        <button class="control-button danger" onclick="confirmEndGame()">🏁 Завершить игру</button>
+    </div>
+
+    <div class="teams-panel" id="teamsPanel"></div>
+</div>
+
+<!-- ===== ФИНАЛЬНЫЙ ЭКРАН ===== -->
+<div id="finalScreen" class="screen">
+    <h1 class="final-title">🏆 ИГРА ЗАВЕРШЕНА 🏆</h1>
+    <div class="final-results" id="finalResults"></div>
+    <button class="start-button" onclick="resetGame()">СЫГРАТЬ ЕЩЁ РАЗ</button>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ВОПРОСА ===== -->
+<div id="questionModal" class="modal">
+    <div class="modal-content">
+        <div class="question-category" id="modalCategory"></div>
+        <div class="question-value" id="modalValue"></div>
+        <div class="question-text" id="modalQuestion"></div>
+        <div class="fun-fact" id="modalFact"></div>
+        <div class="answer-block" id="answerBlock">
+            <div class="answer-label">Правильный ответ</div>
+            <div class="answer-text" id="modalAnswer"></div>
+        </div>
+        <div class="modal-buttons" id="initialButtons">
+            <button class="modal-button primary" onclick="showAnswer()">Показать ответ</button>
+            <button class="modal-button secondary" onclick="skipQuestion()">Пропустить вопрос</button>
+        </div>
+        <div class="scoring-section" id="scoringSection">
+            <div class="scoring-title">Кто ответил правильно?</div>
+            <div class="scoring-buttons" id="scoringButtons"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ТАБЛО ===== -->
+<div id="scoreboardModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:#ffd700; font-size:1.6em; margin-bottom:15px;">📊 ТЕКУЩЕЕ ТАБЛО</h3>
+        <div id="scoreboardContent"></div>
+        <button class="modal-button primary" onclick="closeScoreboard()" style="margin-top:15px;">Закрыть</button>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ===== -->
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:#ffd700; font-size:1.5em; margin-bottom:12px;">Завершить игру?</h3>
+        <p style="font-size:1em; color:#c0d0ff;">Текущие результаты будут зафиксированы и показан победитель.</p>
+        <div style="display:flex; gap:12px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+            <button class="modal-button primary" onclick="endGame()">Да, завершить</button>
+            <button class="modal-button secondary" onclick="closeConfirm()">Нет, продолжить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== БАЗА ВОПРОСОВ =====
+const categories = [
+    {
+        name: "Цифровая безопасность",
+        icon: "🛡️",
+        questions: [
+            {
+                value: 100,
+                question: "Что такое двухфакторная аутентификация (2FA)?",
+                answer: "Это способ подтверждения личности с помощью двух разных факторов: например, пароль + код из SMS или приложения",
+                fact: "Аккаунты с 2FA взламывают в 99% случаев реже, чем обычные. Даже если хакер узнает пароль, без второго фактора он не войдёт."
+            },
+            {
+                value: 200,
+                question: "Почему опасно подключаться к бесплатному Wi-Fi в кафе для входа в банковское приложение?",
+                answer: "Публичные сети часто не шифруются, и злоумышленник может перехватить ваши данные (пароли, номера карт)",
+                fact: "Существуют специальные программы-«снифферы», которые за несколько секунд считывают всё, что передаётся через открытый Wi-Fi. В аэропортах и кафе такие атаки — не редкость."
+            },
+            {
+                value: 300,
+                question: "Что такое фишинг и по каким трём признакам его можно узнать?",
+                answer: "Фишинг — мошенничество с целью кражи данных. Признаки: срочность, поддельный отправитель, ссылка на фальшивый сайт",
+                fact: "Слово «фишинг» (phishing) происходит от английского «fishing» — рыбалка. Мошенник закидывает «удочку» и ждёт, пока жертва «клюнет». Ежегодно от фишинга в мире теряют более 1 млрд долларов."
+            },
+            {
+                value: 400,
+                question: "Вы создали пароль «Vasya2026!». Хакер взломал его за 3 секунды. Почему и как сделать надёжнее?",
+                answer: "Пароль слишком короткий и содержит предсказуемые элементы (имя, год). Надёжный пароль — от 12 символов, без личных данных, с разными регистрами и спецзнаками",
+                fact: "Пароль из 8 символов современный компьютер подбирает за несколько часов. Пароль из 14 символов с разными типами знаков — за несколько тысяч лет. Длина важнее сложности!"
+            },
+            {
+                value: 500,
+                question: "Студент использует один и тот же пароль на почте, в соцсетях и в онлайн-банке. Через неделю его аккаунт в соцсети взломали. Какие ещё ресурсы теперь под угрозой и что нужно было сделать?",
+                answer: "Под угрозой почта и онлайн-банк (через восстановление пароля по почте). Нужно: разные пароли на каждом сервисе, 2FA, менеджер паролей, проверка утечек через Have I Been Pwned",
+                fact: "В 2024 году произошла утечка данных крупного сервиса — и 26 миллионов паролей оказались в открытом доступе. У 70% пользователей эти же пароли стояли и в других местах. Один взлом — и все аккаунты под угрозой."
+            }
+        ]
+    },
+    {
+        name: "Персональные данные",
+        icon: "🔐",
+        questions: [
+            {
+                value: 100,
+                question: "Что такое персональные данные?",
+                answer: "Это любая информация, относящаяся к конкретному человеку: ФИО, адрес, телефон, паспорт, биометрия, IP-адрес",
+                fact: "Даже IP-адрес или cookie-файлы считаются персональными данными, потому что по ним можно идентифицировать человека. Это закреплено в большинстве законов о защите данных в мире."
+            },
+            {
+                value: 200,
+                question: "Что такое «цифровой след» и почему он опасен?",
+                answer: "Это вся информация о человеке, оставленная в интернете: посты, лайки, комментарии, фото. Он опасен тем, что его почти невозможно удалить, и его могут использовать работодатели, мошенники, спецслужбы",
+                fact: "Исследование 2023 года показало: 78% работодателей отказывают кандидатам из-за неуместных постов в соцсетях. Цифровой след остаётся навсегда — даже если вы удалили пост, его могли сохранить."
+            },
+            {
+                value: 300,
+                question: "Вы регистрируетесь на сайте. Сайт просит: согласие на обработку персональных данных. Что это значит юридически?",
+                answer: "Вы даёте разрешение сайту собирать, хранить и использовать ваши данные. Согласие должно быть информированным, конкретным и сознательным",
+                fact: "По закону о персональных данных (действующему и в ПМР) оператор обязан сообщить, какие данные, зачем и как долго он будет хранить. «Галочка» без чтения — юридически согласие, но часто неосознанное."
+            },
+            {
+                value: 400,
+                question: "В соцсетях вы увидели тест: «Узнай, кто ты из Гарри Поттера!». Он просит указать дату рождения, имя матери и кличку первого питомца. В чём подвох?",
+                answer: "Это классическая схема сбора данных для восстановления паролей. Эти три вопроса — стандартные контрольные вопросы при восстановлении доступа к аккаунтам",
+                fact: "В 2022 году через такой «тест» мошенники собрали данные 500 000 человек. Потом они массово взламывали аккаунты, используя собранные ответы на контрольные вопросы. Бесплатный сыр — только в мышеловке."
+            },
+            {
+                value: 500,
+                question: "Человек обнаружил, что его фото и данные появились на чужом сайте без согласия. Назовите его права и алгоритм действий.",
+                answer: "Права: требовать удаления данных, отзыва согласия, возмещения ущерба. Алгоритм: 1) зафиксировать скриншоты, 2) направить требование администратору сайта, 3) обратиться в уполномоченный орган, 4) при необходимости — в суд",
+                fact: "В судебной практике ПМР и соседних стран есть прецеденты, когда люди взыскивали компенсацию за незаконное использование их персональных данных. Ключ — в правильной фиксации нарушения: нотариальный осмотр сайта или скриншоты с датой."
+            }
+        ]
+    },
+    {
+        name: "Киберугрозы",
+        icon: "🦠",
+        questions: [
+            {
+                value: 100,
+                question: "Что такое компьютерный вирус?",
+                answer: "Это вредоносная программа, которая способна размножаться, внедряться в код других программ и наносить вред системе",
+                fact: "Первый вирус в мире — «Creeper» (1971 год) — просто выводил на экран сообщение: «I'm the creeper, catch me if you can!». Сегодня вирусов миллионы, и они гораздо опаснее."
+            },
+            {
+                value: 200,
+                question: "Что такое ransomware (шифровальщик) и что делать, если он заблокировал компьютер?",
+                answer: "Ransomware шифрует файлы и требует выкуп за расшифровку. Действия: не платить, отключить компьютер от сети, обратиться к специалистам, восстановить файлы из резервной копии",
+                fact: "Платить выкуп не рекомендуют ни полиция, ни эксперты: в 40% случаев жертвы всё равно не получают ключ дешифровки, а оплата финансирует преступников. Лучшая защита — регулярные бэкапы."
+            },
+            {
+                value: 300,
+                question: "Что такое социальная инженерия и почему она эффективнее технических взломов?",
+                answer: "Социальная инженерия — манипуляция людьми для получения информации или доступа. Эффективнее, потому что человек — самое слабое звено в системе безопасности: его легче обмануть, чем взломать компьютер",
+                fact: "По статистике, 90% успешных кибератак начинаются с социальной инженерии. Хакеру проще позвонить и попросить пароль под видом техподдержки, чем обходить файрвол."
+            },
+            {
+                value: 400,
+                question: "Вам позвонил «сотрудник банка» и говорит: «С вашего счёта пытаются списать деньги. Назовите код из SMS, чтобы отменить операцию». Ваши действия?",
+                answer: "Положить трубку. Настоящий банк никогда не просит коды из SMS по телефону. Позвонить в банк самостоятельно по номеру с карты или официального сайта",
+                fact: "В 2023 году только в России от телефонных мошенников пострадали на более чем 7 млрд рублей. Мошенники используют психологию: создают срочность, давят на страх, имитируют официальную обстановку."
+            },
+            {
+                value: 500,
+                question: "Компания получила письмо от «генерального директора» с требованием срочно перевести деньги поставщику. Бухгалтер перевёл. Оказалось — подделка. Как называется эта атака и как от неё защититься?",
+                answer: "Это CEO-fraud (BEC — Business Email Compromise). Защита: проверка через второй канал связи (звонок), регламент крупных платежей с двойным подтверждением, обучение сотрудников",
+                fact: "Ущерб от BEC-атак в мире превышает 40 млрд долларов. Мошенники тщательно изучают компанию: копируют стиль писем, используют реальные имена руководителей. Один неверный платёж — и миллионы потеряны."
+            }
+        ]
+    },
+    {
+        name: "Авторское право",
+        icon: "©️",
+        questions: [
+            {
+                value: 100,
+                question: "Что такое авторское право и когда оно возникает?",
+                answer: "Авторское право — это право создателя использовать и распоряжаться своим произведением. Возникает в момент создания произведения, регистрация не требуется",
+                fact: "Знак © не обязателен для защиты, но рекомендуется. Авторское право действует всю жизнь автора + 70 лет после его смерти в большинстве стран."
+            },
+            {
+                value: 200,
+                question: "Студент скачал из интернета музыку и использовал её в своём видеоролике на YouTube. Видео удалили. Почему?",
+                answer: "Использование чужой музыки без разрешения — нарушение авторских прав. YouTube автоматически распознаёт такую музыку через систему Content ID и удаляет видео",
+                fact: "Content ID — это система, которая анализирует миллионы часов видео в день. Она находит даже 10 секунд чужой музыки. За повторные нарушения канал блокируют навсегда."
+            },
+            {
+                value: 300,
+                question: "Что такое Creative Commons (CC) и какие основные типы лицензий существуют?",
+                answer: "CC — система свободных лицензий для произведений. Основные типы: CC BY (с указанием автора), CC NC (некоммерческое использование), CC SA (производные на тех же условиях), CC0 (общественное достояние)",
+                fact: "Благодаря CC в мире существуют миллионы свободных фотографий, музыки и текстов. Например, все статьи Википедии распространяются под лицензией CC BY-SA."
+            },
+            {
+                value: 400,
+                question: "Учитель нашёл в интернете статью, распечатал 30 копий и раздал ученикам. Это нарушение авторских прав?",
+                answer: "Это может быть допустимо в рамках «свободного использования» в образовательных целях, но с ограничениями: указание автора и источника, небольшой объём, некоммерческое использование. Полное копирование книги — уже нарушение",
+                fact: "В законодательстве большинства стран (включая ПМР) есть понятие «свободное использование» — цитирование, использование в учебных целях. Но оно имеет чёткие границы: объём, цель, указание автора."
+            },
+            {
+                value: 500,
+                question: "Блогер сделал видео-обзор книги, показал обложку, процитировал 3 коротких отрывка, указал автора и издательство. Издательство требует удалить видео. Правы ли они?",
+                answer: "Нет, это добросовестное цитирование в научных, polemических или информационных целях. Оно разрешено законом при условии указания автора и источника. Объём цитирования оправдан целью",
+                fact: "Право на цитирование — одно из ключевых исключений в авторском праве. Оно позволяет критиковать, обсуждать, анализировать произведения без разрешения автора. Но цитата должна быть действительно цитатой, а не пересказом всего произведения."
+            }
+        ]
+    },
+    {
+        name: "Правовые основы (ПМР)",
+        icon: "⚖️",
+        questions: [
+            {
+                value: 100,
+                question: "Какой основной закон Приднестровской Молдавской Республики гарантирует право на информацию?",
+                answer: "Конституция ПМР. Также действует Закон ПМР «Об информации, информатизации и защите информации»",
+                fact: "Конституция ПМР была принята на референдуме 17 января 2000 года. Право на информацию — одно из базовых прав гражданина, наряду со свободой слова и неприкосновенностью частной жизни."
+            },
+            {
+                value: 200,
+                question: "Какой закон ПМР регулирует обработку персональных данных граждан?",
+                answer: "Закон ПМР «О персональных данных»",
+                fact: "Этот закон во многом аналогичен европейскому GDPR и российскому 152-ФЗ: он устанавливает права субъекта данных, обязанности оператора, требования к безопасности и ответственность за нарушения."
+            },
+            {
+                value: 300,
+                question: "Какие виды юридической ответственности предусмотрены за нарушения в информационной сфере?",
+                answer: "Дисциплинарная, административная, гражданско-правовая и уголовная — в зависимости от тяжести нарушения",
+                fact: "Например, разглашение персональных данных по неосторожности сотрудником — дисциплинарная ответственность. Умышленная продажа баз данных — уголовная. Непринятие мер защиты оператором — административная."
+            },
+            {
+                value: 400,
+                question: "Что такое государственная тайна по законодательству ПМР и какие сведения к ней относятся?",
+                answer: "Государственная тайна — защищаемые государством сведения в области военной, внешнеполитической, экономической, разведывательной деятельности, распространение которых может нанести ущерб безопасности ПМР",
+                fact: "За разглашение государственной тайны предусмотрена уголовная ответственность вплоть до лишения свободы. Список сведений, составляющих гостайну, определяется специальным перечнем."
+            },
+            {
+                value: 500,
+                question: "Гражданин обнаружил, что государственный орган отказал ему в предоставлении информации, которую он запрашивал. Какие правовые механизмы защиты он может использовать?",
+                answer: "1) Обжалование вышестоящему должностному лицу. 2) Обращение в уполномоченный орган по защите прав. 3) Обращение в суд. Право на информацию гарантировано Конституцией ПМР и Законом «Об информации»",
+                fact: "Судебная практика показывает: граждане всё чаще выигрывают дела о предоставлении информации. Ключевой аргумент — информация не должна относиться к ограниченным в доступе категориям (гостайна, персональные данные третьих лиц и т.д.)."
+            }
+        ]
+    },
+    {
+        name: "Цифровая этика",
+        icon: "💭",
+        questions: [
+            {
+                value: 100,
+                question: "Что такое кибербуллинг?",
+                answer: "Это систематическая травля человека в интернете: оскорбления, угрозы, распространение ложной информации, публикация личных данных без согласия",
+                fact: "По данным исследований, каждый третий подросток в мире сталкивался с кибербуллингом. В отличие от обычной травли, кибербуллинг может быть круглосуточным и достигать огромной аудитории."
+            },
+            {
+                value: 200,
+                question: "Чем клевета отличается от оскорбления с юридической точки зрения?",
+                answer: "Клевета — распространение заведомо ложных сведений, порочащих честь и достоинство. Оскорбление — унижение чести и достоинства в неприличной форме, независимо от правдивости",
+                fact: "За клевету предусмотрена уголовная ответственность, за оскорбление — чаще административная. Ключевое различие: клевета — это ложь, оскорбление — это форма выражения (даже если правда)."
+            },
+            {
+                value: 300,
+                question: "Студент выложил в соцсети фото одногруппницы с смешной подписью. Она попросила удалить — он отказался. Какие правовые и этические нарушения здесь?",
+                answer: "Этическое: неуважение к просьбе человека. Правовое: использование изображения без согласия (нарушение права на изображение), возможное оскорбление, распространение без согласия персональных данных",
+                fact: "Право на изображение — часть права на неприкосновенность частной жизни. Даже в публичном месте нельзя публиковать фото человека, если он является основным объектом, без его согласия."
+            },
+            {
+                value: 400,
+                question: "В классе создали фейковый аккаунт одноклассника и от его имени писали гадости другим. Одноклассник не знал. Это преступление?",
+                answer: "Да. Это может квалифицироваться как клевета (если писали ложные порочащие сведения), оскорбление, а также как нарушение права на имя и частную жизнь. Возможна уголовная и гражданская ответственность",
+                fact: "Такие случаи в судебной практике называются «кражей цифровой идентичности». Жертва может требовать не только удаления аккаунта, но и компенсации морального вреда."
+            },
+            {
+                value: 500,
+                question: "Блогер с миллионом подписчиков опубликовал пост о частной жизни публичного политика, основанный на слухах. Политика уволили с работы. Блогер утверждает: «Я просто высказал мнение». Прав ли он?",
+                answer: "Нет. Высказывание мнения защищено свободой слова, но распространение ложных фактов под видом мнения — клевета. Публичные лица имеют право на защиту репутации. Блогер несёт ответственность за недостоверную информацию, особенно с учётом большого охвата аудитории",
+                fact: "В мировой практике есть понятие «ответственность публичных высказываний»: чем больше аудитория, тем выше ответственность. В ряде стран блогеры с миллионной аудиторией приравниваются к СМИ и несут соответствующую ответственность."
+            }
+        ]
+    }
+];
+
+// ===== СОСТОЯНИЕ ИГРЫ =====
+let gameState = {
+    teams: [],
+    usedQuestions: new Set(),
+    currentQuestion: null
+};
+
+// ===== ИНИЦИАЛИЗАЦИЯ СТАРТОВОГО ЭКРАНА =====
+function updateTeamInputs() {
+    const count = parseInt(document.getElementById('teamCount').value);
+    const container = document.getElementById('teamNameInputs');
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Название команды ${i + 1}`;
+        input.value = `Команда ${i + 1}`;
+        input.id = `teamName${i}`;
+        container.appendChild(input);
+    }
+}
+
+updateTeamInputs();
+
+// ===== СТАРТ ИГРЫ =====
+function startGame() {
+    const count = parseInt(document.getElementById('teamCount').value);
+    gameState.teams = [];
+    for (let i = 0; i < count; i++) {
+        const nameInput = document.getElementById(`teamName${i}`);
+        const name = nameInput.value.trim() || `Команда ${i + 1}`;
+        gameState.teams.push({ name: name, score: 0 });
+    }
+    gameState.usedQuestions = new Set();
+    renderBoard();
+    renderTeamsPanel();
+    showScreen('gameScreen');
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+// ===== ОТРИСОВКА ИГРОВОГО ПОЛЯ =====
+function renderBoard() {
+    const board = document.getElementById('gameBoard');
+    board.innerHTML = '';
+
+    // Заголовки категорий
+    categories.forEach(cat => {
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `${cat.icon}<br>${cat.name}`;
+        board.appendChild(header);
+    });
+
+    // Вопросы по строкам (100, 200, 300, 400, 500)
+    for (let row = 0; row < 5; row++) {
+        categories.forEach((cat, colIdx) => {
+            const q = cat.questions[row];
+            const cell = document.createElement('div');
+            cell.className = 'question-cell';
+            const key = `${colIdx}-${row}`;
+            cell.dataset.key = key;
+            cell.textContent = q.value;
+            if (gameState.usedQuestions.has(key)) {
+                cell.classList.add('used');
+            } else {
+                cell.onclick = () => openQuestion(colIdx, row);
+            }
+            board.appendChild(cell);
+        });
+    }
+}
+
+// ===== ПАНЕЛЬ КОМАНД =====
+function renderTeamsPanel() {
+    const panel = document.getElementById('teamsPanel');
+    panel.innerHTML = '';
+    gameState.teams.forEach(team => {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+            <div class="team-name">${team.name}</div>
+            <div class="team-score">${team.score}</div>
+        `;
+        panel.appendChild(card);
+    });
+}
+
+// ===== ОТКРЫТИЕ ВОПРОСА =====
+function openQuestion(colIdx, rowIdx) {
+    const cat = categories[colIdx];
+    const q = cat.questions[rowIdx];
+    const key = `${colIdx}-${rowIdx}`;
+
+    if (gameState.usedQuestions.has(key)) return;
+
+    gameState.currentQuestion = { colIdx, rowIdx, key, value: q.value };
+
+    document.getElementById('modalCategory').textContent = `${cat.icon} ${cat.name}`;
+    document.getElementById('modalValue').textContent = `${q.value} баллов`;
+    document.getElementById('modalQuestion').textContent = q.question;
+    document.getElementById('modalFact').textContent = q.fact;
+    document.getElementById('modalAnswer').textContent = q.answer;
+
+    document.getElementById('answerBlock').classList.remove('visible');
+    document.getElementById('scoringSection').classList.remove('visible');
+    document.getElementById('initialButtons').style.display = 'flex';
+
+    document.getElementById('questionModal').classList.add('active');
+}
+
+// ===== ПОКАЗАТЬ ОТВЕТ =====
+function showAnswer() {
+    document.getElementById('answerBlock').classList.add('visible');
+    document.getElementById('initialButtons').style.display = 'none';
+    document.getElementById('scoringSection').classList.add('visible');
+
+    const buttonsContainer = document.getElementById('scoringButtons');
+    buttonsContainer.innerHTML = '';
+
+    gameState.teams.forEach((team, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'team-score-btn';
+        btn.textContent = `✓ ${team.name}`;
+        btn.onclick = () => awardPoints(idx);
+        buttonsContainer.appendChild(btn);
+    });
+
+    const noAnswerBtn = document.createElement('button');
+    noAnswerBtn.className = 'team-score-btn no-answer';
+    noAnswerBtn.textContent = 'Никто не ответил';
+    noAnswerBtn.onclick = () => closeQuestion();
+    buttonsContainer.appendChild(noAnswerBtn);
+}
+
+// ===== НАЧИСЛИТЬ БАЛЛЫ =====
+function awardPoints(teamIdx) {
+    gameState.teams[teamIdx].score += gameState.currentQuestion.value;
+    closeQuestion();
+}
+
+// ===== ЗАКРЫТЬ ВОПРОС =====
+function closeQuestion() {
+    if (gameState.currentQuestion) {
+        gameState.usedQuestions.add(gameState.currentQuestion.key);
+    }
+    document.getElementById('questionModal').classList.remove('active');
+    renderBoard();
+    renderTeamsPanel();
+    checkGameEnd();
+}
+
+// ===== ПРОПУСТИТЬ ВОПРОС =====
+function skipQuestion() {
+    closeQuestion();
+}
+
+// ===== ПРОВЕРКА КОНЦА ИГРЫ =====
+function checkGameEnd() {
+    const totalQuestions = categories.length * 5;
+    if (gameState.usedQuestions.size >= totalQuestions) {
+        setTimeout(endGame, 500);
+    }
+}
+
+// ===== ТАБЛО =====
+function showScoreboard() {
+    const content = document.getElementById('scoreboardContent');
+    const sorted = [...gameState.teams].sort((a, b) => b.score - a.score);
+    let html = '';
+    sorted.forEach((team, idx) => {
+        const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : ''));
+        html += `
+            <div class="team-result ${idx === 0 ? 'winner' : ''}">
+                <span><span class="medal">${medal}</span>${team.name}</span>
+                <span style="color:#ffed4e;">${team.score}</span>
+            </div>
+        `;
+    });
+    content.innerHTML = html;
+    document.getElementById('scoreboardModal').classList.add('active');
+}
+
+function closeScoreboard() {
+    document.getElementById('scoreboardModal').classList.remove('active');
+}
+
+// ===== ЗАВЕРШЕНИЕ ИГРЫ =====
+function confirmEndGame() {
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('active');
+}
+
+function endGame() {
+    document.getElementById('confirmModal').classList.remove('active');
+    document.getElementById('questionModal').classList.remove('active');
+
+    const sorted = [...gameState.teams].sort((a, b) => b.score - a.score);
+    const results = document.getElementById('finalResults');
+    let html = '';
+    sorted.forEach((team, idx) => {
+        const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : ''));
+        const winnerClass = idx === 0 ? 'winner' : '';
+        html += `
+            <div class="team-result ${winnerClass}">
+                <span><span class="medal">${medal}</span>${team.name}</span>
+                <span style="color:#ffed4e; font-size:1.2em;">${team.score} баллов</span>
+            </div>
+        `;
+    });
+
+    html += `
+        <div style="margin-top:15px; padding:12px; background:rgba(10,15,40,0.5); border-radius:10px; text-align:left;">
+            <h4 style="color:#ffd700; margin-bottom:8px; font-size:1em;">📌 Что повторить на следующем уроке:</h4>
+            <ul style="list-style:none; padding:0; color:#c0d0ff; font-size:0.95em;">
+                <li style="padding:3px 0;">▸ Надёжные пароли и двухфакторная аутентификация</li>
+                <li style="padding:3px 0;">▸ Распознавание фишинга и социальной инженерии</li>
+                <li style="padding:3px 0;">▸ Законодательство ПМР о персональных данных и информации</li>
+                <li style="padding:3px 0;">▸ Авторское право и свободное использование</li>
+            </ul>
+        </div>
+    `;
+
+    results.innerHTML = html;
+    showScreen('finalScreen');
+}
+
+// ===== СБРОС ИГРЫ =====
+function resetGame() {
+    gameState = { teams: [], usedQuestions: new Set(), currentQuestion: null };
+    showScreen('startScreen');
+}
+</script>
+</body>
+</html>
